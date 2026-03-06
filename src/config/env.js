@@ -9,38 +9,42 @@ const BOOLEAN_SCHEMA = Joi.boolean()
   .falsy("0");
 
 function loadConfig(env = process.env) {
+  const hasDbSsl = Object.prototype.hasOwnProperty.call(env, "DB_SSL");
+  const hasDbEncrypt = Object.prototype.hasOwnProperty.call(env, "DB_ENCRYPT");
   const schema = Joi.object({
     NODE_ENV: Joi.string().valid("development", "test", "production").default("development"),
     PORT: Joi.number().port().default(3000),
     LOG_LEVEL: Joi.string().valid("error", "warn", "info", "debug").default("info"),
     LOG_SQL: BOOLEAN_SCHEMA.default(false),
-    DB_DIALECT: Joi.string().valid("mssql", "sqlite").default("mssql"),
+    DB_DIALECT: Joi.string().valid("postgres", "sqlite").default("postgres"),
     DB_HOST: Joi.when("DB_DIALECT", {
-      is: "mssql",
+      is: "postgres",
       then: Joi.string().required(),
       otherwise: Joi.string().allow("", null).optional()
     }),
     DB_PORT: Joi.when("DB_DIALECT", {
-      is: "mssql",
+      is: "postgres",
       then: Joi.number().port().required(),
       otherwise: Joi.number().port().default(0)
     }),
     DB_NAME: Joi.when("DB_DIALECT", {
-      is: "mssql",
+      is: "postgres",
       then: Joi.string().required(),
       otherwise: Joi.string().allow("", null).optional()
     }),
     DB_USER: Joi.when("DB_DIALECT", {
-      is: "mssql",
+      is: "postgres",
       then: Joi.string().required(),
       otherwise: Joi.string().allow("", null).optional()
     }),
     DB_PASSWORD: Joi.when("DB_DIALECT", {
-      is: "mssql",
+      is: "postgres",
       then: Joi.string().required(),
       otherwise: Joi.string().allow("", null).optional()
     }),
-    DB_ENCRYPT: BOOLEAN_SCHEMA.default(true),
+    DB_SSL: BOOLEAN_SCHEMA.default(false),
+    DB_SSL_REJECT_UNAUTHORIZED: BOOLEAN_SCHEMA.default(true),
+    DB_ENCRYPT: BOOLEAN_SCHEMA.optional(),
     DB_STORAGE: Joi.string().allow("", null).default(null),
     ENTRA_TENANT_ID: Joi.string().required(),
     API_CLIENT_ID: Joi.string().required(),
@@ -81,7 +85,8 @@ function loadConfig(env = process.env) {
       name: value.DB_NAME || null,
       user: value.DB_USER || null,
       password: value.DB_PASSWORD || null,
-      encrypt: value.DB_ENCRYPT,
+      ssl: hasDbSsl ? value.DB_SSL : (hasDbEncrypt ? value.DB_ENCRYPT : value.DB_SSL),
+      sslRejectUnauthorized: value.DB_SSL_REJECT_UNAUTHORIZED,
       storage: value.DB_STORAGE || null
     },
     auth: {

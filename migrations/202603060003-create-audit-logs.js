@@ -1,13 +1,11 @@
 "use strict";
 
 function getDateType(queryInterface, Sequelize) {
-  return queryInterface.sequelize.getDialect() === "mssql" ? "DATETIME2" : Sequelize.DATE;
+  return Sequelize.DATE;
 }
 
 function getNowLiteral(queryInterface, Sequelize) {
-  return queryInterface.sequelize.getDialect() === "mssql"
-    ? Sequelize.literal("SYSUTCDATETIME()")
-    : Sequelize.literal("CURRENT_TIMESTAMP");
+  return Sequelize.literal("CURRENT_TIMESTAMP");
 }
 
 module.exports = {

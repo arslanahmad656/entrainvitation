@@ -1,7 +1,6 @@
 "use strict";
 
 const { Sequelize } = require("sequelize");
-const tedious = require("tedious");
 
 function createSequelize(dbConfig, logging = false) {
   if (dbConfig.dialect === "sqlite") {
@@ -15,8 +14,7 @@ function createSequelize(dbConfig, logging = false) {
   return new Sequelize(dbConfig.name, dbConfig.user, dbConfig.password, {
     host: dbConfig.host,
     port: dbConfig.port,
-    dialect: "mssql",
-    dialectModule: tedious,
+    dialect: "postgres",
     logging,
     pool: {
       max: 10,
@@ -24,13 +22,14 @@ function createSequelize(dbConfig, logging = false) {
       acquire: 30000,
       idle: 10000
     },
-    dialectOptions: {
-      options: {
-        encrypt: dbConfig.encrypt,
-        trustServerCertificate: !dbConfig.encrypt,
-        enableArithAbort: true
-      }
-    }
+    dialectOptions: dbConfig.ssl
+      ? {
+          ssl: {
+            require: true,
+            rejectUnauthorized: dbConfig.sslRejectUnauthorized
+          }
+        }
+      : {}
   });
 }
 

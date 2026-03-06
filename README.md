@@ -11,12 +11,12 @@ Backend-only Web API for Microsoft Entra ID guest invitation, first-login activa
 - Defers app role assignment until the guest's first successful login.
 - Uses the Entra `oid` claim as the stable external identity key.
 - Supports admin-triggered guest redemption reset through Graph.
-- Stores app-specific onboarding data in SQL Server with repository boundaries.
+- Stores app-specific onboarding data in PostgreSQL with repository boundaries.
 
 ## Stack
 
 - Node.js with Express
-- Sequelize with Microsoft SQL Server (`tedious`)
+- Sequelize with PostgreSQL (`pg`)
 - Microsoft Graph REST APIs
 - dotenv for configuration
 - Jest + Supertest for tests
@@ -54,7 +54,7 @@ Required runtime settings:
 - `DB_NAME`
 - `DB_USER`
 - `DB_PASSWORD`
-- `DB_ENCRYPT`
+- `DB_SSL`
 - `ENTRA_TENANT_ID`
 - `API_CLIENT_ID`
 - `AUTH_AUDIENCE`
@@ -67,11 +67,18 @@ Useful optional settings:
 - `PORT`
 - `LOG_LEVEL`
 - `LOG_SQL`
+- `DB_SSL_REJECT_UNAUTHORIZED`
 - `GRAPH_BASE_URL`
 - `GRAPH_SCOPE`
 - `SERVICE_PRINCIPAL_CACHE_TTL_MS`
 
-Testing uses sqlite in-memory through `DB_DIALECT=sqlite` in the test harness only. Production remains SQL Server.
+Runtime notes:
+
+- `DB_SSL=false` is the normal local Postgres setup.
+- `DB_SSL=true` enables TLS for hosted Postgres.
+- `DB_SSL_REJECT_UNAUTHORIZED=false` is only for self-signed or controlled environments.
+
+Testing defaults to sqlite in-memory for speed, but integration tests can also run against a real Postgres database through `TEST_DB_*` variables.
 
 ## Graph permissions
 
@@ -114,6 +121,14 @@ Tests:
 ```bash
 npm test
 ```
+
+Integration tests against Postgres:
+
+```bash
+npm run test:integration:postgres
+```
+
+That script expects `TEST_DB_HOST`, `TEST_DB_PORT`, `TEST_DB_NAME`, `TEST_DB_USER`, and `TEST_DB_PASSWORD` to be set. The test helper auto-loads `.env.test` if present, and a sample file is available at `.env.test.example`.
 
 ## API endpoints
 
@@ -171,7 +186,7 @@ Migrations create:
 - `Invitations`
 - `AuditLogs`
 
-The schema follows the requested SQL Server structure, with indexes on:
+The schema follows the requested relational structure, with indexes on:
 
 - `Users.entra_oid` unique
 - `Users.email`

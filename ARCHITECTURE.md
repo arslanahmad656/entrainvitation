@@ -40,7 +40,7 @@
 
 ## Persistence and transactions
 
-- SQL Server is the primary database.
+- PostgreSQL is the primary database.
 - Sequelize is used only inside the repository layer.
 - Service methods use repository calls plus explicit Sequelize transactions for local state changes.
 - Migrations are managed with Umzug.
